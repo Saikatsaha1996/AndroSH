@@ -24,13 +24,13 @@ AndroSH is a professional-grade tool that deploys **full Alpine Linux environmen
 
 ### ✨ Why AndroSH Stands Out
 
-| Feature | AndroSH | Others |
-|---------|---------|--------|
-| **Root Access** | ✅ No root required | ❌ Often requires root |
-| **Permissions** | Shizuku-powered elevated access | Limited user permissions |
-| **Management** | SQLite database + CLI interface | Manual file management |
-| **Multi-Distro** | Multiple isolated environments | Single instance |
-| **Performance** | 40% faster startup | Slow initialization |
+| Superpower | AndroSH | Others |
+|------------|---------|--------|
+| **Complete Android System Bridge** | ✅ Run **ANY** Android command from Linux shell | ❌ Isolated containers only |
+| **Root Privileges Safely** | ✅ Full root in Linux + Android system integration | ❌ Requires bootloader unlock |
+| **Enterprise-Grade Management** | ✅ SQLite database + professional CLI | ❌ Manual file management |
+| **Scalable Environments** | ✅ Multiple isolated distros | ❌ Single instance |
+| **Optimized Performance** | ✅ 40% faster startup | ❌ Slow initialization |
 
 ## 🎯 Features That Matter
 
