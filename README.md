@@ -113,7 +113,7 @@ pip install -r requirements.txt
 ### One-Command Installation
 ```bash
 # Install for global access
-androsh install
+python main.py install
 # Now use from anywhere!
 androsh setup --name workspace
 ```
