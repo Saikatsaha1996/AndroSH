@@ -746,6 +746,6 @@ if __name__ == '__main__':
 		print()
 		c.error("Operation cancelled by user")
 		sys.exit(1)
-	"""except Exception as e:
+	except Exception as e:
 		c.console.error(f"Unexpected error: {e}")
-		sys.exit(1)"""
+		sys.exit(1)
