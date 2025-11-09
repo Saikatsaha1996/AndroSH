@@ -741,7 +741,7 @@ if __name__ == '__main__':
 	c = console()
 	try:
 		main = AndroSH()
-		c = main.console
+		c = main.console()
 	except KeyboardInterrupt:
 		print()
 		c.error("Operation cancelled by user")
