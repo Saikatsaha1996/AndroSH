@@ -1,4 +1,4 @@
 requests
-rish
+rich
 pyfiglet
 PyYAML
