@@ -1,25 +1,48 @@
+import sys
+from pathlib import Path
+from rich.markup import escape
+from Core.console import console
 import subprocess
 import shlex
-import shutil
 import stat
 import tempfile
 import os
 
 
 class Rish:
-	
+
 	def dex(self, dex_name: str = "rish_shizuku.dex") -> str:
-		dex_path = os.path.join(tempfile.gettempdir(), dex_name)
-		if not os.path.exists(dex_path):
-			shutil.copy(
-				os.path.join(self.assets_path, dex_name),
-				dex_path
-			)
-		
-		if os.access(dex_path, os.W_OK):
-			os.chmod(dex_path, stat.S_IREAD)
-		
-		return dex_path
+
+		assets_path = Path(self.assets_path)
+		dex_asset = assets_path / dex_name
+
+
+		if self.resources:
+			resources_path = Path(self.resources) / dex_name
+			if resources_path.exists():
+				dex_asset = resources_path
+
+
+		dex_path = Path(tempfile.gettempdir()) / dex_name
+
+
+		if not dex_path.exists():
+
+			self.fm.copy(dex_asset, dex_path)
+
+		if not dex_path.exists() or self.fm.checksum(dex_asset) != self.fm.checksum(dex_path):
+
+			dex_path.chmod(stat.S_IWRITE)
+			self.fm.remove(dex_path)
+
+
+			self.fm.copy(str(dex_asset), str(dex_path))
+
+
+		if dex_path.stat().st_mode & stat.S_IWUSR:
+			dex_path.chmod(stat.S_IREAD)  # Set read-only
+
+		return str(dex_path)
 	
 	def rish(self, command: list):
 		env = os.environ.copy()
@@ -36,25 +59,84 @@ class Rish:
 			] + command,
 			capture_output=True,
 			text=True,
-			env=env
+			env=env,
+			timeout=self.timeout
 		)
 		return result
 	
-	def run(self, command_string):
+	def run(self, command_string, timeout = None):
+		self.timeout = timeout
 		args = shlex.split(command_string)
 		result = self.rish(args)
 		return result
-	
+
 	def drun(self, command_string):
+
+		env = os.environ.copy()
 		if not os.environ.get("RISH_APPLICATION_ID") or self.app_id_bool:
-			os.environ["RISH_APPLICATION_ID"] = self.app_id
-		
-		status = os.system(f"/system/bin/app_process -Djava.class.path=\"{self.dex()}\" /system/bin --nice-name=rish rikka.shizuku.shell.ShizukuShellLoader {command_string}")
-		if not status == 0:
+			env['RISH_APPLICATION_ID'] = self.app_id
+
+		self.console.debug(f"Executing: {command_string}")
+
+		try:
+			process = subprocess.Popen(
+				[
+					"/system/bin/app_process",
+					f"-Djava.class.path={self.dex()}",
+					"/system/bin",
+					"--nice-name=rish",
+					"rikka.shizuku.shell.ShizukuShellLoader",
+				] + shlex.split(command_string),
+				env=env,
+				stdout=None,
+				stderr=None,
+				stdin=None
+			)
+
+			# Wait for completion
+			returncode = process.wait()
+
+			if returncode != 0:
+				exit(returncode)
+
+		except subprocess.TimeoutExpired:
+			self.console.error("Command timed out")
+			process.kill()
 			exit(1)
-	
-	def __init__(self, app_id: str = "com.termux",
+		except Exception as e:
+			self.console.error(f"Execution failed: {e}")
+			exit(1)
+
+	def check_rish(self):
+		self.console.verbose("Checking rish application")
+		result = self.run("-c id")
+		self.console.debug(escape(repr(result)))
+		if result.returncode != 0:
+			self.console.error(f"[red]Failed to establish connection with Shizuku API[/red]: {escape(repr(result.stderr))}")
+			self.console.print("")
+			self.console.print("[yellow]ACTION REQUIRED[/yellow]")
+			self.console.print("• Verify Shizuku service is currently running")
+			self.console.print("• Navigate to Shizuku app → Terminal apps → Export files")
+			self.console.print("• Ensure rish_shizuku.dex is placed in resources directory")
+			self.console.print("")
+			self.console.print("[green]RESOLUTION[/green]")
+			self.console.print("After completing these steps, re-execute your command")
+			self.console.print("Ensure that your terminal for example Termux is allowed in Shiuku.")
+			self.console.print("The connection issue should now be resolved")
+			self.console.print("")
+			self.console.print("[blue]NOTE[/blue] Use debug mode for detailed diagnostics: androsh --debug \\[command]")
+			sys.exit(0)
+
+	def __init__(self, console_instance = None,
+	    r_path = None,
+	    app_id: str = "com.termux",
 		app_id_bool: bool = False):
+		from Core.HiManagers import PyFManager
+		self.console = console_instance if console_instance else console()
+		self.resources = r_path
 		self.assets_path = "Assets"
 		self.app_id = app_id
 		self.app_id_bool = app_id_bool
+		self.timeout = None
+		self.fm = PyFManager()
+		self.check_rish()
