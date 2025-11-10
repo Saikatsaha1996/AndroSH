@@ -83,7 +83,7 @@ ARGS="$ARGS -r $ROOTFS_DIR"
 ARGS="$ARGS -0"
 ARGS="$ARGS --link2symlink"
 ARGS="$ARGS --sysvipc"
-if [ $(proot --ashmem-memfd echo "supported" 2> /dev/null || echo "unsupported") == "supported" ];then
+if [ $($PROOT_BIN --ashmem-memfd echo "supported" 2> /dev/null || echo "unsupported") == "supported" ];then
   ARGS="$ARGS --ashmem-memfd"
 fi
 #ARGS="$ARGS -v -1"
