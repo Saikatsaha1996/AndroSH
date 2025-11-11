@@ -8,6 +8,7 @@
 [![Version](https://img.shields.io/badge/version-25.11.09-blue?style=for-the-badge)](https://github.com/ahmed-alnassif/AndroSH/releases)
 [![Python](https://img.shields.io/badge/python-3.8+-green?style=for-the-badge)](https://python.org)
 [![License](https://img.shields.io/badge/license-GPLv3-orange?style=for-the-badge)](LICENSE)
+[![Verified Binaries](https://img.shields.io/badge/binaries-verified-success?style=for-the-badge)](#-technical-components--trust)
 [![Platform](https://img.shields.io/badge/platform-Android-success?style=for-the-badge)](https://www.android.com)
 [![Distributions](https://img.shields.io/badge/distros-4+-yellow?style=for-the-badge)](https://github.com/ahmed-alnassif/AndroSH)
 [![Status](https://img.shields.io/badge/status-active-brightgreen?style=for-the-badge)](https://github.com/ahmed-alnassif/AndroSH)
@@ -278,16 +279,6 @@ androsh setup field --distro debian --type stable
 apt install vim tmux htop net-tools
 ```
 
-## 🏆 Performance Benchmarks
-
-| Operation | AndroSH | Traditional Methods | Improvement |
-|-----------|---------|---------------------|-------------|
-| Environment Startup | **~1.8 seconds** | 5-8 seconds | **64% faster** |
-| Distribution Listing | **0.3 seconds** | 0.8 seconds | **62% faster** |
-| Memory Footprint | **45MB average** | 80-120MB | **50% reduction** |
-| Deployment Time | **2.1 seconds** | 6-12 seconds | **65% faster** |
-
-
 ### Multi-Environment Isolation
 
 ```bash
@@ -341,6 +332,42 @@ androsh clean kali-nethunter # Remove temporary files
 - **Local Storage**: All data remains on-device
 - **Transparent Operations**: Open-source verification
 - **Permission Auditing**: Clear permission boundaries
+
+## 🛠️ Technical Components & Trust
+
+### Verified Binary Sources
+
+AndroSH integrates established open-source components to ensure compatibility and performance across Android environments.
+
+| Component | Source Project | Purpose |
+|-----------|----------------|---------|
+| **Enhanced PRoot** | [Xed-Editor/Karbon-PackagesX](https://github.com/Xed-Editor/Karbon-PackagesX) | Shizuku-compatible virtualization |
+| **BusyBox NDK** | [Magisk-Modules-Repo/busybox-ndk](https://github.com/Magisk-Modules-Repo/busybox-ndk) | Essential Unix utilities for Android |
+
+### Component Rationale
+
+**Enhanced PRoot**: Required for Shizuku integration and Android permission delegation (Termux PRoot incompatible)
+
+**BusyBox NDK**: Provides consistent command availability (tar, grep, awk) across fragmented Android versions
+
+### Source Transparency
+
+```bash
+# Enhanced PRoot sources
+https://github.com/ahmed-alnassif/proot-bin
+
+# BusyBox NDK sources  
+https://github.com/ahmed-alnassif/busybox
+
+# AndroSH core
+https://github.com/ahmed-alnassif/AndroSH
+```
+
+### Security & Verification
+
+- SHA-256 checksum validation for all downloads
+- All dependencies traceable to upstream sources
+- Regular security updates and version synchronization
 
 ## Troubleshooting Guide
 
