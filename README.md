@@ -157,19 +157,17 @@ graph TD
     D --> G[Ubuntu LTS]
     D --> H[Kali NetHunter]
     
-    E --> I[Package Management]
+    E --> I[Android System Integration]
     F --> I
     G --> I
     H --> I
     
-    I --> J[Android System Integration]
-    J --> K[Android Command Execution]
-    J --> L[File System Access]
-    J --> M[Network Configuration]
+    I --> K[Android Command Execution]
+    I --> L[File System Access]
+    I --> M[Network Configuration]
     
     style D fill:#FF6B00,color:white
     style I fill:#4CAF50,color:white
-    style J fill:#2196F3,color:white
 ```
 
 ### Technical Innovations
