@@ -270,6 +270,42 @@ class UbuntuDistribution(TermuxDistribution):
 		return super().supports_architecture(termux_arch)
 
 
+class ArchLinuxDistribution(TermuxDistribution):
+	def get_name(self) -> str:
+		return "archlinux"
+
+
+	def _map_architecture(self, arch: str) -> str:
+		"""Map standard architecture to Termux-specific names"""
+		termux_arch_map = {
+			'arm64': 'aarch64',
+			'arm': 'arm',
+			'x86_64': 'x86_64',
+			'x86': 'i686'
+		}
+		return termux_arch_map.get(arch, arch)
+
+	def supports_architecture(self, arch: str) -> bool:
+		termux_arch = self._map_architecture(arch)
+		return super().supports_architecture(termux_arch)
+
+class FedoraDistribution(TermuxDistribution):
+	def get_name(self) -> str:
+		return "fedora"
+
+
+	def _map_architecture(self, arch: str) -> str:
+		"""Map standard architecture to Termux-specific names"""
+		termux_arch_map = {
+			'arm64': 'aarch64',
+			'x86_64': 'x86_64'
+		}
+		return termux_arch_map.get(arch, arch)
+
+	def supports_architecture(self, arch: str) -> bool:
+		termux_arch = self._map_architecture(arch)
+		return super().supports_architecture(termux_arch)
+
 class AlpineDistribution(Distribution):
 	"""Alpine Linux distribution"""
 
@@ -752,6 +788,18 @@ class DistributionManager:
 		self.resources = resources
 		self.db = db
 		self.check_storage = check_storage_func
+		self.termux_distros_list_str = [
+			"debian",
+			"ubuntu",
+			"archlinux",
+			"fedora"
+		]
+		self.termux_distros_list = [
+			DebianDistribution,
+			UbuntuDistribution,
+			ArchLinuxDistribution,
+			FedoraDistribution
+		]
 		self.distributions: Dict[str, Distribution] = self._initialize_distributions()
 		self.current_arch = self.get_current_architecture()
 
@@ -760,10 +808,7 @@ class DistributionManager:
 		distributions = {}
 
 		# Termux-based distributions
-		termux_distros = [
-			('debian', DebianDistribution),
-			('ubuntu', UbuntuDistribution)
-		]
+		termux_distros = list(zip(self.termux_distros_list_str, self.termux_distros_list))
 
 		# Direct download distributions
 		direct_distros = [
@@ -779,7 +824,7 @@ class DistributionManager:
 					self.resources, self.db, self.check_storage
 				)
 				# Load data for Termux distributions
-				if distro_name in ['debian', 'ubuntu']:
+				if distro_name in self.termux_distros_list_str:
 					distributions[distro_name]._load_distro_data()
 			except Exception as e:
 				self.console.warning(f"Failed to initialize {distro_name}: {e}")
@@ -803,7 +848,7 @@ class DistributionManager:
 
 		# Set default type based on distribution
 		if distro_type is None:
-			if distro_name in ['debian', 'ubuntu']:
+			if distro_name in self.termux_distros_list_str:
 				distro_type = "stable"
 			else:
 				distro_type = "minimal"
@@ -919,13 +964,13 @@ class DistributionManager:
 			elif distro_name == "alpine":
 				alpine_arch = distro._map_architecture(self.current_arch)
 				return distro.get_file_size(alpine_arch, distro_type)
-			elif distro_name in ["debian", "ubuntu"]:
+			elif distro_name in self.termux_distros_list_str:
 				# For Termux distros, show the single size
 				size_map = {
-					'arm64': '50-100MB',
-					'arm': '50-100MB',
-					'x86': '50-100MB',
-					'x86_64': '50-100MB'
+					'arm64': '40-300MB',
+					'arm': '40-300MB',
+					'x86': '40-300MB',
+					'x86_64': '40-300MB'
 				}
 				return size_map.get(self.current_arch, 'Unknown')
 		except:
@@ -948,7 +993,7 @@ class DistributionManager:
 				mapped_arch = distro._map_architecture(self.current_arch)
 
 				if hasattr(distro, 'distro_data') and distro.distro_data:
-					# Termux distributions (Debian/Ubuntu)
+					# Termux distributions
 					tarball_info = distro.distro_data.get('tarballs', {}).get(mapped_arch, {})
 					if tarball_info.get('url'):
 						distro_urls['stable'] = tarball_info['url']

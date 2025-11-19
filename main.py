@@ -81,6 +81,14 @@ class AndroSH:
 		self.distro_type = "alpine-minirootfs"
 		self.distro = "alpine"
 		self.rootfs_dir = "rootfs"
+		self.distros = [
+							"alpine",
+							"debian",
+							"ubuntu",
+							"kali-nethunter",
+							"archlinux",
+							"fedora"
+						]
 
 
 		parser = self._setup_argparse()
@@ -188,7 +196,7 @@ class AndroSH:
 		setup_parser.add_argument('name', default=name,
 		                          help=f'Environment name (default: {name})')
 		setup_parser.add_argument('-d', '--distro', default=self.distro,
-		                          choices=['alpine', 'debian', 'ubuntu', 'kali-nethunter'],
+		                          choices=self.distros,
 		                          help=f'Linux distribution (default: {self.distro})')
 		setup_parser.add_argument('-t', '--type', default=self.distro_type,
 		                          help=f'Distribution variant (minimal, full, stable) - depends on distro (default: {self.distro_type})')
@@ -226,7 +234,7 @@ class AndroSH:
 		# Download command - NEW
 		download_parser = subparsers.add_parser('download', help='Download distribution files')
 		download_parser.add_argument('distro',
-		                             choices=['alpine', 'debian', 'ubuntu', 'kali-nethunter'],
+		                             choices=self.distros,
 		                             help='Distribution to download')
 		download_parser.add_argument('--type', required=True,
 		                             help='Distribution variant (required)')
@@ -245,7 +253,7 @@ class AndroSH:
 		# distro download
 		distro_download_parser = distro_subparsers.add_parser('download', help='Download distribution')
 		distro_download_parser.add_argument('distro_name',
-		                                    choices=['alpine', 'debian', 'ubuntu', 'kali-nethunter'],
+		                                    choices=self.distros,
 		                                    help='Name of the distribution')
 		distro_download_parser.add_argument('--type', '-t',
 		                                    help='Distribution variant (default depends on distro)')
@@ -255,7 +263,7 @@ class AndroSH:
 		# distro info
 		distro_info_parser = distro_subparsers.add_parser('info', help='Get distribution information')
 		distro_info_parser.add_argument('distro_name',
-		                                choices=['alpine', 'debian', 'ubuntu', 'kali-nethunter'],
+		                                choices=self.distros,
 		                                help='Name of the distribution')
 
 		# distro urls
@@ -748,4 +756,5 @@ if __name__ == '__main__':
 		sys.exit(1)
 	except Exception as e:
 		c.error(f"Unexpected error: {e}")
+		raise
 		sys.exit(1)
