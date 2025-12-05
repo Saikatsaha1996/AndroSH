@@ -719,7 +719,7 @@ class AndroSH:
 			self.console.info("Use: [cyan]androsh setup <name>[/cyan] to install a distro")
 			return
 
-		table = Table(title="📦 Installed Distros", box=box.ROUNDED)
+		table = Table(title="Installed Distros", box=box.ROUNDED)
 		table.add_column("Name", style="cyan", no_wrap=True)
 		table.add_column("Path", style="blue")
 		table.add_column("Distribution", style="green")

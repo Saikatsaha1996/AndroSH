@@ -1,4 +1,5 @@
 import re
+import socket
 import yaml
 from abc import ABC, abstractmethod
 from typing import Optional, Dict, Any, List
@@ -6,13 +7,14 @@ from Core.HiManagers import PyFManager
 from Core.console import Table, box
 from Core.downloader import FileDownloader
 from Core.request import create_session
+from Core.errors_handler import Offline_err
 
 
 class Distribution(ABC):
 	"""Abstract base class for Linux distributions"""
 
 	def __init__(self, fm: PyFManager, downloader: FileDownloader, console,
-	             resources: str, db, check_storage_func=None):
+	             resources: str, db, check_storage_func=None, is_offline=None):
 		self.fm = fm
 		self.downloader = downloader
 		self.console = console
@@ -20,11 +22,17 @@ class Distribution(ABC):
 		self.db = db
 		self.check_storage = check_storage_func
 		self.session = create_session()
+		self.is_offline_bool = is_offline
 
 	@abstractmethod
 	def download(self, file_name: str = None, distro_type: str = "minimal") -> None:
 		"""Download the distribution"""
 		pass
+
+	def is_offline(self):
+		if self.is_offline_bool:
+			self.console.verbose("Offline mode")
+			raise Offline_err("Offline mode")
 
 	@abstractmethod
 	def get_name(self) -> str:
@@ -108,6 +116,7 @@ class TermuxDistribution(Distribution):
 
 		# Fetch from GitHub
 		try:
+			self.is_offline()
 			script_url = f"https://raw.githubusercontent.com/termux/proot-distro/refs/heads/master/distro-plugins/{distro_name}.sh"
 			response = self.session.get(script_url)
 			response.raise_for_status()
@@ -118,6 +127,13 @@ class TermuxDistribution(Distribution):
 			# Cache the data
 			self.db.add(f"distro_{distro_name}", self.distro_data)
 			self.console.verbose(f"Fetched and cached {distro_name} data from GitHub")
+
+		except Offline_err:
+			self.distro_data = {
+									'name': '',
+									'comment': '',
+									'tarballs': {}
+								}
 
 		except Exception as e:
 			self.console.error(f"Failed to fetch {distro_name} data: {e}")
@@ -310,8 +326,8 @@ class AlpineDistribution(Distribution):
 	"""Alpine Linux distribution"""
 
 	def __init__(self, fm: PyFManager, downloader: FileDownloader, console,
-	             resources: str, db, check_storage_func=None):
-		super().__init__(fm, downloader, console, resources, db, check_storage_func)
+	             resources: str, db, check_storage_func=None, **kwargs):
+		super().__init__(fm, downloader, console, resources, db, check_storage_func, **kwargs)
 		self.supported_archs = ['x86_64', 'x86', 'aarch64', 'armv7', 'armhf']
 		self.available_flavors = {}  # Will be populated from metadata
 		self.metadata = None
@@ -367,6 +383,7 @@ class AlpineDistribution(Distribution):
 				self.metadata = cached_metadata
 				self.console.verbose(f"Loaded Alpine metadata for {alpine_arch} from cache")
 			else:
+				self.is_offline()
 				response = self.session.get(metadata_url)
 				response.raise_for_status()
 				raw_metadata = yaml.safe_load(response.text)
@@ -560,8 +577,8 @@ class KaliNethunterDistribution(Distribution):
 	"""Kali Nethunter distribution implementation"""
 
 	def __init__(self, fm: PyFManager, downloader: FileDownloader, console,
-	             resources: str, db, check_storage_func=None):
-		super().__init__(fm, downloader, console, resources, db, check_storage_func)
+	             resources: str, db, check_storage_func=None, **kwargs):
+		super().__init__(fm, downloader, console, resources, db, check_storage_func, **kwargs)
 		self.supported_archs = ['amd64', 'arm64', 'armhf', 'i386']
 		self.supported_types = ["minimal", "nano", "full"]
 		self.base_url = "https://kali.download/nethunter-images/current/rootfs"
@@ -627,6 +644,7 @@ class KaliNethunterDistribution(Distribution):
 			return self.file_sizes
 
 		try:
+			self.is_offline()
 			response = self.session.get(self.base_url + "/")
 			response.raise_for_status()
 
@@ -800,11 +818,22 @@ class DistributionManager:
 			ArchLinuxDistribution,
 			FedoraDistribution
 		]
+
 		self.distributions: Dict[str, Distribution] = self._initialize_distributions()
 		self.current_arch = self.get_current_architecture()
 
+	@staticmethod
+	def is_connected(host="1.1.1.1", port=53, timeout=2):
+		try:
+			socket.setdefaulttimeout(timeout)
+			socket.socket(socket.AF_INET, socket.SOCK_STREAM).connect((host, port))
+			return True
+		except socket.error:
+			return False
+
 	def _initialize_distributions(self) -> Dict[str, Distribution]:
 		"""Initialize all available distributions"""
+		is_offline = not self.is_connected()
 		distributions = {}
 
 		# Termux-based distributions
@@ -821,7 +850,7 @@ class DistributionManager:
 			try:
 				distributions[distro_name] = distro_class(
 					self.fm, self.downloader, self.console,
-					self.resources, self.db, self.check_storage
+					self.resources, self.db, self.check_storage, is_offline=is_offline
 				)
 				# Load data for Termux distributions
 				if distro_name in self.termux_distros_list_str:
@@ -1032,7 +1061,7 @@ class DistributionManager:
 			self.console.warning("No distribution URLs found")
 			return
 
-		self.console.info("📦 All Distribution Download URLs")
+		self.console.info("All Distribution Download URLs")
 		self.console.info(f"Architecture: {self.current_arch}")
 		self.console.print("")
 
