@@ -117,7 +117,7 @@ class Rish:
 			self.console.print("[yellow]ACTION REQUIRED[/yellow]")
 			self.console.print("• Verify Shizuku service is currently running")
 			self.console.print("• Navigate to Shizuku app → Terminal apps → Export files")
-			self.console.print("• Ensure rish_shizuku.dex is placed in resources directory")
+			self.console.print(f"• Ensure rish_shizuku.dex is placed in resources directory: {self.resources}")
 			self.console.print("")
 			self.console.print("[green]RESOLUTION[/green]")
 			self.console.print("After completing these steps, re-execute your command")
