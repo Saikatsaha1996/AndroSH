@@ -6,7 +6,7 @@ from rich.console import Console
 from rich.table import Table
 from rich.panel import Panel
 from rich import box
-from Core import name, developer, version
+from Core import name, developer, version, url
 from enum import Enum
 
 class LogLevel(Enum):
@@ -87,7 +87,8 @@ class console:
             print(logo)
             d = \
             f"Created by [bold green]{developer["name"]}[/bold green]\n"+\
-            f"GitHub: {developer["github"]}\n"+\
-            f"Version: [red]{version}[/red]"
+            f"[bold black]GitHub[/bold black]: [cyan]{developer["github"]}[/cyan]\n"+\
+            f"Version: [red]{version}[/red]\n"+\
+            f"[underline white]{url}[/underline white]"
             
             self.header(d)

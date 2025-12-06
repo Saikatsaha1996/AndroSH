@@ -4,3 +4,4 @@ developer = {
 	"github": "Ahmed-AlNassif"
 }
 version = "25.12.05"
+url = "https://github.com/ahmed-alnassif/AndroSH"
