@@ -10,7 +10,7 @@ from typing import Union, List, Optional, Generator, Dict, Any
 from Core.shizuku import Rish
 
 
-class ADFileManager:
+class ADBFileManager:
 	"""ADB/Rish level file management operations with enhanced logging and error handling"""
 
 	def __init__(self, rish: Rish, console_instance):
@@ -276,7 +276,7 @@ class ADFileManager:
 class BusyBoxManager:
 	"""Enhanced BusyBox management with comprehensive file operations"""
 
-	def __init__(self, adb_file_manager: ADFileManager, console_instance,
+	def __init__(self, adb_file_manager: ADBFileManager, console_instance,
 	             busybox_path: str = "/data/local/tmp/busybox"):
 		self.adb = adb_file_manager
 		self.console = console_instance

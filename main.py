@@ -8,7 +8,7 @@ import sys
 import time
 
 from Core import name
-from Core.HiManagers import ADFileManager, BusyBoxManager, PyFManager, Path
+from Core.HiManagers import ADBFileManager, BusyBoxManager, PyFManager, Path
 from Core.console import console, LogLevel, Table, box
 from Core.db import DB
 from Core.distro_manager import DistributionManager
@@ -109,7 +109,7 @@ class AndroSH:
 		self.request = create_session()
 		self.downloader = FileDownloader()
 		self.rish = Rish(self.console, self.resources)
-		self.adb = ADFileManager(self.rish, self.console)
+		self.adb = ADBFileManager(self.rish, self.console)
 		self.distro_manager = DistributionManager(self.fm, self.downloader,
 		                                          self.console, self.resources,
 		                                          self.db, self.check_storage
