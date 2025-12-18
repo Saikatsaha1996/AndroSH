@@ -67,6 +67,7 @@ class AndroSH:
 	def __init__(self):
 
 		# Configuration
+		self.hostname = name
 		self.force_setup = False
 		self.root = "/data/local/tmp"
 		self.resources = f"/sdcard/Download/{name}"
@@ -201,6 +202,8 @@ class AndroSH:
 		                          help=f'Linux distribution (default: {self.distro})')
 		setup_parser.add_argument('-t', '--type', default=self.distro_type,
 		                          help=f'Distribution variant (minimal, full, stable) - depends on distro (default: {self.distro_type})')
+		setup_parser.add_argument('--hostname', default=name,
+		                          help=f'Custom Hostname (default: {name})')
 		setup_parser.add_argument('--resetup', action='store_true',
 		                          help='Reinstall environment while preserving data')
 		setup_parser.add_argument('--force', action='store_true',
@@ -558,7 +561,8 @@ class AndroSH:
 			f"{Path(self.assets_path) / self.sandbox_script}",
 			f"{Path(self.resources) / self.sandbox_script}",
 			dir=self.distro_dir,
-			distro=self.rootfs_dir
+			distro=self.rootfs_dir,
+			hostname=self.db.subget(self.distro_dir, "hostname") or name
 		)
 
 		sandbox_script = f"{Path(self.resources) / self.sandbox_script}"
@@ -586,13 +590,15 @@ class AndroSH:
 			f"{Path(self.assets_path) / self.sandbox_script}",
 			f"{Path(self.resources) / self.sandbox_script}",
 			dir=self.distro_dir,
-			distro=self.rootfs_dir
+			distro=self.rootfs_dir,
+			hostname=self.hostname
 		)
 
 		self.console.verbose("Updating database with distro information")
 		self.db.update({
 			self.distro_dir: {
 				"name": self.dir_name,
+				"hostname": self.hostname,
 				"distro_dir": self.rootfs_dir,
 				"distro": self.distro,
 				"base_dir": self.base_dir,
@@ -613,6 +619,7 @@ class AndroSH:
 		self.dir_name = args.name if args.name else name
 		self.is_setup = True
 		self.force_setup = args.resetup
+		self.hostname = args.hostname
 
 		if args.verbose or args.debug:
 			self.console.status(f"Setting up distro in {self.distro_dir}")
