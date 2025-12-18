@@ -10,7 +10,7 @@
 [![License](https://img.shields.io/badge/license-GPLv3-orange?style=for-the-badge)](LICENSE)
 [![Verified Binaries](https://img.shields.io/badge/binaries-verified-success?style=for-the-badge)](https://github.com/ahmed-alnassif/AndroSH?tab=readme-ov-file#%EF%B8%8F-technical-components--trust)
 [![Platform](https://img.shields.io/badge/platform-Android-success?style=for-the-badge)](https://www.android.com)
-[![Distributions](https://img.shields.io/badge/distros-4+-yellow?style=for-the-badge)](https://github.com/ahmed-alnassif/AndroSH)
+[![Distributions](https://img.shields.io/badge/distros-6+-yellow?style=for-the-badge)](https://github.com/ahmed-alnassif/AndroSH)
 [![Status](https://img.shields.io/badge/status-active-brightgreen?style=for-the-badge)](https://github.com/ahmed-alnassif/AndroSH)
 ![androsh launch kali](/Assets/Screenshots/launch-kali.png)
 </div>
