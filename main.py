@@ -71,9 +71,9 @@ class AndroSH:
 		self.custom_shell = "bash"
 		self.hostname = name
 		self.force_setup = False
-		self.root = "/data/local/tmp"
+		self.root = f"/data/local/tmp/{name}/rootfs"
 		self.resources = f"/sdcard/Download/{name}"
-		self.busybox_dir = f"{self.root}/busybox"
+		self.busybox_dir = f"/data/local/tmp/{name}/busybox"
 		self.busybox_path = f"{self.busybox_dir}/busybox"
 		self.assets_path = "Assets"
 		self.wrapper_script = "AndroSH_wrapper.sh"
@@ -290,8 +290,8 @@ class AndroSH:
 		                       help='Quiet output: suppress non-essential information')
 
 		# Global arguments
-		parser.add_argument('--base-dir', default="/data/local/tmp",
-		                    help='Base directory for environments (default: /data/local/tmp)')
+		parser.add_argument('--base-dir', default=self.root,
+		                    help=f'Base directory for environments (default: {self.root})')
 		parser.add_argument('--resources-dir', default=self.resources,
 		                    help=f'Resources directory for downloads (default: {self.resources})')
 		parser.add_argument("--time-style", action="store_true",
@@ -583,6 +583,10 @@ class AndroSH:
 	def _execute_setup(self) -> None:
 		self.console.divider()
 		self.console.info("Starting setup process...")
+
+		if not self.busybox.exists(self.root):
+			self.console.verbose(f"{self.root} not exists trying to creating it")
+			self.busybox.mkdir(self.root, parents=True)
 
 		if self.custom_rootfs:
 			self.console.info("Setting up using custom rootfs file")
