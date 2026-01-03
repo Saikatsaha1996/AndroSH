@@ -3,5 +3,5 @@ developer = {
 	"name": "Ahmed Al-Nassif",
 	"github": "Ahmed-AlNassif"
 }
-version = "25.12.05"
+version = "26.01.03"
 url = "https://github.com/ahmed-alnassif/AndroSH"
