@@ -282,7 +282,7 @@ class BusyBoxManager:
 		self.console = console_instance
 		self.busybox_path = busybox_path
 		self.busybox_cmd = f"{busybox_path}/busybox"
-		self._available = None
+		self._available = True
 		self._applets = None
 
 	def _log(self, message: str, success: bool = True):
