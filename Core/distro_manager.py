@@ -518,7 +518,7 @@ class AlpineDistribution(Distribution):
 			self.console.warning(f"Note: {distro_type} is an ISO image, not a tarball")
 
 		# Find metadata for this flavor and architecture
-		distro_metadata = self._find_metadata_for_flavor(arch, distro_type)
+		distro_metadata = self._find_metadata_for_flavor(alpine_arch, distro_type)
 		if not distro_metadata:
 			raise ValueError(f"No download available for {distro_type} on architecture {arch}")
 
