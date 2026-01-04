@@ -33,7 +33,7 @@ for system_mnt in / /system /vendor /product /system_ext /odm /apex \
     /plat_property_contexts /property_contexts /vendor_property_contexts \
     /system/etc/selinux /vendor/etc/selinux /product/etc/selinux \
     /init /init.rc /default.prop /system/build.prop /vendor/build.prop /dsp \
-    /bt_firmware; do
+    /bt_firmware /acct; do
 
     if [ -e "$system_mnt" ]; then
         system_path=$(readlink -f "$system_mnt" 2>/dev/null || echo "$system_mnt")
@@ -72,7 +72,6 @@ ARGS="$ARGS -b /proc/self/fd/1:/dev/stdout"
 ARGS="$ARGS -b /proc/self/fd/2:/dev/stderr"
 ARGS="$ARGS -b $PROOT_MAIN"
 ARGS="$ARGS -b /sys"
-ARGS="$ARGS -b /acct"
 #ARGS="$ARGS -b /cache"
 
 if [ ! -d "$ROOTFS_DIR/tmp" ]; then
