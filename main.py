@@ -639,7 +639,7 @@ class AndroSH:
 
 	def setup_distro(self, args) -> None:
 		self.console.debug(f"Setup distro called with args: {vars(args)}")
-		self.distro = "custom" if args.distro == self.distro else args.distro
+		self.distro = "custom" if args.distro == self.distro and args.rootfs else args.distro
 		self.distro_type = args.type
 		self.distro_dir = f"{Path(args.base_dir) / args.name}"
 		self.base_dir = args.base_dir
