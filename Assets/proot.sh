@@ -78,6 +78,7 @@ if [ ! -d "$ROOTFS_DIR/tmp" ]; then
     mkdir -p "$ROOTFS_DIR/tmp"
     chmod 1777 "$ROOTFS_DIR/tmp"
 fi
+ARGS="$ARGS -b /data/data/com.termux/files/usr/tmp:/tmp"
 ARGS="$ARGS -b $ROOTFS_DIR/tmp:/dev/shm"
 
 ARGS="$ARGS -r $ROOTFS_DIR"
