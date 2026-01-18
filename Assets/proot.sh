@@ -18,7 +18,7 @@ ARGS="$ARGS -w /root"
 
 for data_dir in /data /data/app /data/data /data/user /data/user_de \
     /data/dalvik-cache /data/misc /data/system /data/vendor \
-    /data/misc_ce /data/misc_de /data/misc_apexdata /data/data/com.termux \
+    /data/misc_ce /data/misc_de /data/misc_apexdata \
     /data/misc/apexdata/com.android.art/dalvik-cache; do
     if [ -e "$data_dir" ]; then
         ARGS="$ARGS -b ${data_dir}"
@@ -78,7 +78,9 @@ if [ ! -d "$ROOTFS_DIR/tmp" ]; then
     mkdir -p "$ROOTFS_DIR/tmp"
     chmod 1777 "$ROOTFS_DIR/tmp"
 fi
-ARGS="$ARGS -b /data/data/com.termux/files/usr/tmp:/tmp"
+PREFIX=/data/data/com.termux/files/usr
+ARGS="$ARGS -b $PREFIX/tmp:/tmp"
+#ARGS="$ARGS -b /data/data/com.termux/files/usr/tmp:/tmp"
 ARGS="$ARGS -b $ROOTFS_DIR/tmp:/dev/shm"
 
 ARGS="$ARGS -r $ROOTFS_DIR"
