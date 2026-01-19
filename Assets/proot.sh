@@ -137,9 +137,9 @@ echo "aid_$USER_NAME:*:18446:0:99999:7:::" >> "$SHADOW_FILE"
 
 # Add groups
 id -Gn | tr ' ' '\n' | while read gname; do
-    # fallback GID: if group not in /etc/group
-    gid=$(getent group "$gname" | cut -d: -f3)
-    [ -z "$gid" ] && gid=$(id -G "$gname" | tr ' ' '\n' | head -n1)
+    # Get GID from /etc/group, fallback to USER_GID
+    gid=$(grep -E "^$gname:" "$GROUP_FILE" 2>/dev/null | cut -d: -f3)
+    [ -z "$gid" ] && gid="$USER_GID"
 
     grep -q "^aid_$gname:" "$GROUP_FILE" || \
         echo "aid_$gname:x:$gid:root,aid_$USER_NAME" >> "$GROUP_FILE"
