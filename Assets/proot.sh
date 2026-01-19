@@ -155,6 +155,7 @@ if [ ! -f "$PROOT_MAIN/patched" ]; then
 
     # Clean up temporary files
     rm -f "$TMPNAMES" "$TMPIDS"
+fi
     
 if [ $# -gt 0 ]; then
     # shellcheck disable=SC2086
