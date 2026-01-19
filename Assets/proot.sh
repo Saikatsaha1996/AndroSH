@@ -128,14 +128,22 @@ USER_NAME=$(id -un)
 USER_UID=$(id -u)
 USER_GID=$(id -g)
 
+# Add current user
 grep -q "^aid_$USER_NAME:" "$PASSWD_FILE" || \
-echo "aid_$USER_NAME:x:$USER_UID:$USER_GID:Termux:/root:/sbin/nologin" >> "$PASSWD_FILE"
+echo "aid_$USER_NAME:x:$USER_UID:$USER_GID:User:/root:/sbin/nologin" >> "$PASSWD_FILE"
+
 grep -q "^aid_$USER_NAME:" "$SHADOW_FILE" || \
 echo "aid_$USER_NAME:*:18446:0:99999:7:::" >> "$SHADOW_FILE"
 
-paste <(id -Gn | tr ' ' '\n') <(id -G | tr ' ' '\n') | while read -r gname gid; do
+# Add groups
+id -Gn | tr ' ' '\n' | while read gname; do
+    # fallback GID: if group not in /etc/group
+    gid=$(getent group "$gname" | cut -d: -f3)
+    [ -z "$gid" ] && gid=$(id -G "$gname" | tr ' ' '\n' | head -n1)
+
     grep -q "^aid_$gname:" "$GROUP_FILE" || \
         echo "aid_$gname:x:$gid:root,aid_$USER_NAME" >> "$GROUP_FILE"
+
     [ -f "$GSHADOW_FILE" ] && grep -q "^aid_$gname:" "$GSHADOW_FILE" || \
         echo "aid_$gname:*::root,aid_$USER_NAME" >> "$GSHADOW_FILE"
 done
