@@ -137,7 +137,14 @@ if [ ! -f "$PROOT_MAIN/patched" ]; then
             >> $ROOTFS_DIR/etc/shadow
     fi
 
-    paste <(id -Gn | tr ' ' '\n') <(id -G | tr ' ' '\n') | while read -r gname gid; do
+    # --- Fix for paste <(...) in shells without process substitution ---
+    TMPNAMES=$(mktemp)
+    TMPIDS=$(mktemp)
+
+    id -Gn | tr ' ' '\n' > "$TMPNAMES"
+    id -G  | tr ' ' '\n' > "$TMPIDS"
+
+    paste "$TMPNAMES" "$TMPIDS" | while read -r gname gid; do
         if ! grep -q "aid_${gname}:" $ROOTFS_DIR/etc/group; then
             echo "aid_${gname}:x:${gid}:root,aid_${REAL_USER}" \
                 >> $ROOTFS_DIR/etc/group
@@ -145,6 +152,9 @@ if [ ! -f "$PROOT_MAIN/patched" ]; then
                 >> $ROOTFS_DIR/etc/gshadow 2>/dev/null
         fi
     done
+
+    # Clean up temporary files
+    rm -f "$TMPNAMES" "$TMPIDS"
     
 if [ $# -gt 0 ]; then
     # shellcheck disable=SC2086
