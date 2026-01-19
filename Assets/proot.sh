@@ -83,8 +83,10 @@ if [ ! -f "$PROOT_MAIN/patched" ]; then
 fi
 
 # ---------- Launch ----------
-if [ $# -gt 0 ]; then
-    exec $PROOT_BIN $ARGS "$@"
-else
-    exec $PROOT_BIN $ARGS /bin/sh --login
-fi
+if [ $# -gt 0 ]; then  
+    # shellcheck disable=SC2086  
+    $PROOT_BIN $ARGS "$@"  
+else  
+    # shellcheck disable=SC2086  
+    $PROOT_BIN $ARGS /bin/sh -c "if command -v {{chsh}} >/dev/null 2>&1; then exec {{chsh}} --login; else exec sh; fi"  
+fi  
