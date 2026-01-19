@@ -1,92 +1,103 @@
 #!/system/bin/sh
 
+# shellcheck disable=SC1083
 export LD_LIBRARY_PATH={{dir}}/lib
-export TERM=xterm-256color
 export PROOT_TMP_DIR={{dir}}/tmp
+export TERM=xterm-256color
+#export PROOT_NO_SECCOMP=1
 
-PATH="/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:{{dir}}/bin:/system/bin:/system/xbin:/vendor/bin:/product/bin:/odm/bin:/system_ext/bin:$PATH"
+PATH="/bin:/sbin:/usr/bin:/usr/sbin:/usr/games:/usr/local/bin:/usr/local/sbin:{{dir}}/bin:/system/bin:/system/xbin:/vendor/bin:/product/bin:/odm/bin:/system_ext/bin:\$PATH"
 
 PROOT_MAIN={{dir}}
 ROOTFS_DIR=$PROOT_MAIN/{{distro}}
 PROOT_BIN=$PROOT_MAIN/bin/proot
 
-ARGS="--kill-on-exit"
-ARGS="$ARGS -w /root"
-
-# ---------- Android bind mounts ----------
-for data_dir in /data /data/app /data/data /data/user /data/user_de \
-    /data/dalvik-cache /data/misc /data/system /data/vendor; do
-    [ -e "$data_dir" ] && ARGS="$ARGS -b $data_dir"
-done
-
-for system_mnt in / /system /vendor /product /system_ext /odm /apex; do
-    [ -e "$system_mnt" ] && ARGS="$ARGS -b $system_mnt"
-done
-
-# ---------- Storage ----------
-if [ -e /storage/emulated/0 ]; then
-    ARGS="$ARGS -b /storage"
-    ARGS="$ARGS -b /storage/emulated/0:/sdcard"
-fi
-
-# ---------- Core ----------
-ARGS="$ARGS -b /dev"
-ARGS="$ARGS -b /proc"
-ARGS="$ARGS -b /sys"
-ARGS="$ARGS -b /proc/self/fd:/dev/fd"
-ARGS="$ARGS -b /proc/self/fd/0:/dev/stdin"
-ARGS="$ARGS -b /proc/self/fd/1:/dev/stdout"
-ARGS="$ARGS -b /proc/self/fd/2:/dev/stderr"
-
-# ---------- TMP (DBUS SAFE PART) ----------
-# Ensure fake /tmp inside rootfs (DO NOT bind Android paths)
+# ------------------------
+# TMP + XDG_RUNTIME_DIR fix
+# ------------------------
 mkdir -p "$ROOTFS_DIR/tmp"
 chmod 1777 "$ROOTFS_DIR/tmp"
 
-mkdir -p "$ROOTFS_DIR/dev/shm"
-chmod 1777 "$ROOTFS_DIR/dev/shm"
+export TMPDIR=$ROOTFS_DIR/tmp
+export TEMP=$ROOTFS_DIR/tmp
+export TMP=$ROOTFS_DIR/tmp
+export XDG_RUNTIME_DIR=$ROOTFS_DIR/tmp
+chmod 700 "$XDG_RUNTIME_DIR"
 
-ARGS="$ARGS -b $ROOTFS_DIR/dev/shm:/dev/shm"
-# ❌ NO /tmp bind — let proot fake FS handle it
-
-# ---------- Proot core ----------
+# ------------------------
+# Proot ARGS
+# ------------------------
+ARGS="--kill-on-exit"
+ARGS="$ARGS -w /root"
 ARGS="$ARGS -r $ROOTFS_DIR"
 ARGS="$ARGS -0"
 ARGS="$ARGS --link2symlink"
 ARGS="$ARGS --sysvipc"
 ARGS="$ARGS -L"
-ARGS="$ARGS --kernel-release=6.6.30-AndroSH"
 
-if $PROOT_BIN --ashmem-memfd true >/dev/null 2>&1; then
-    ARGS="$ARGS --ashmem-memfd"
-fi
+# bind necessary paths
+ARGS="$ARGS -b $ROOTFS_DIR/tmp:/tmp"
+ARGS="$ARGS -b $ROOTFS_DIR/tmp:/dev/shm"
+ARGS="$ARGS -b /proc"
+ARGS="$ARGS -b /proc/self/fd:/dev/fd"
+ARGS="$ARGS -b /proc/self/fd/0:/dev/stdin"
+ARGS="$ARGS -b /proc/self/fd/1:/dev/stdout"
+ARGS="$ARGS -b /proc/self/fd/2:/dev/stderr"
+ARGS="$ARGS -b /dev"
+ARGS="$ARGS -b /dev/urandom:/dev/random"
+ARGS="$ARGS -b /sys"
+ARGS="$ARGS -b $PROOT_MAIN"
 
-# ---------- One-time patch ----------
+# ------------------------
+# Bind storage + system (optional)
+# ------------------------
+for data_dir in /data /storage; do
+    [ -e "$data_dir" ] && ARGS="$ARGS -b $data_dir"
+done
+
+# ------------------------
+# Set host UID/GID in rootfs (optional)
+# ------------------------
 if [ ! -f "$PROOT_MAIN/patched" ]; then
-    {
-        echo "export HOME=/root"
-        echo "export TERM=xterm-256color"
-        echo "export LANG=C.UTF-8"
-        echo "export HOSTNAME={{hostname}}"
-        echo "export ANDROID_DATA=/data"
-        echo "export ANDROID_ROOT=/system"
-        echo "export ANDROID_STORAGE=/storage"
-    } >> "$ROOTFS_DIR/etc/profile"
+    REAL_UID=$(grep '^Uid:' /proc/self/status | awk '{print $2}')
+    REAL_GID=$(grep '^Gid:' /proc/self/status | awk '{print $2}')
+    REAL_USER=$(id -un)
 
-    echo "{{hostname}}" > "$ROOTFS_DIR/etc/hostname"
-    echo "127.0.1.1 {{hostname}}" >> "$ROOTFS_DIR/etc/hosts"
+    chmod u+rw $ROOTFS_DIR/etc/passwd $ROOTFS_DIR/etc/group $ROOTFS_DIR/etc/shadow $ROOTFS_DIR/etc/gshadow 2>/dev/null || true
 
-    echo "nameserver 1.1.1.1" > "$ROOTFS_DIR/etc/resolv.conf"
-    echo "nameserver 1.0.0.1" >> "$ROOTFS_DIR/etc/resolv.conf"
+    if ! grep -q "aid_${REAL_USER}:" $ROOTFS_DIR/etc/passwd; then
+        echo "aid_${REAL_USER}:x:${REAL_UID}:${REAL_GID}:Android User:/:/sbin/nologin" >> $ROOTFS_DIR/etc/passwd
+        echo "aid_${REAL_USER}:*:18446:0:99999:7:::" >> $ROOTFS_DIR/etc/shadow
+    fi
 
-    touch "$PROOT_MAIN/patched"
+    for g in $(id -Gn); do
+        gid=$(id -G | cut -d' ' -f1)  # simplified
+        if ! grep -q "aid_${g}:" $ROOTFS_DIR/etc/group; then
+            echo "aid_${g}:x:${gid}:root,aid_${REAL_USER}" >> $ROOTFS_DIR/etc/group
+            echo "aid_${g}:*::root,aid_${REAL_USER}" >> $ROOTFS_DIR/etc/gshadow 2>/dev/null
+        fi
+    done
+
+    touch $PROOT_MAIN/patched
 fi
 
-# ---------- Launch ----------
-if [ $# -gt 0 ]; then  
-    # shellcheck disable=SC2086  
-    $PROOT_BIN $ARGS "$@"  
-else  
-    # shellcheck disable=SC2086  
-    $PROOT_BIN $ARGS /bin/sh -c "if command -v {{chsh}} >/dev/null 2>&1; then exec {{chsh}} --login; else exec sh; fi"  
-fi  
+# ------------------------
+# Start dbus inside proot FS
+# ------------------------
+DBUS_ADDRESS="unix:path=$XDG_RUNTIME_DIR/bus"
+mkdir -p "$XDG_RUNTIME_DIR"
+chmod 700 "$XDG_RUNTIME_DIR"
+export DBUS_SESSION_BUS_ADDRESS=$DBUS_ADDRESS
+
+# start dbus-daemon only if not running
+pgrep -x dbus-daemon >/dev/null || \
+dbus-daemon --session --address=$DBUS_ADDRESS --nofork --nopidfile &
+
+# ------------------------
+# Run proot
+# ------------------------
+if [ $# -gt 0 ]; then
+    $PROOT_BIN $ARGS "$@"
+else
+    $PROOT_BIN $ARGS /bin/sh -c "if command -v {{chsh}} >/dev/null 2>&1; then exec {{chsh}} --login; else exec sh; fi"
+fi
