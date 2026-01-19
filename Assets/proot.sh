@@ -79,7 +79,8 @@ if [ ! -d "$ROOTFS_DIR/tmp" ]; then
     chmod 1777 "$ROOTFS_DIR/tmp"
 fi
 
-ARGS="$ARGS -b $ROOTFS_DIR/tmp:/tmp"
+#ARGS="$ARGS -b $ROOTFS_DIR/tmp:/tmp"
+ARGS="$ARGS -b /data/local/tmp:/tmp"
 ARGS="$ARGS -b $ROOTFS_DIR/tmp:/dev/shm"
 
 ARGS="$ARGS -r $ROOTFS_DIR"
