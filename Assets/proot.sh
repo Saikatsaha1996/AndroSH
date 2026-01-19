@@ -117,37 +117,35 @@ if [ ! -f $PROOT_MAIN/patched ]; then
     touch $PROOT_MAIN/patched
 fi
 
-PASSWD_FILE="$ROOTFS_DIR/etc/passwd"
-SHADOW_FILE="$ROOTFS_DIR/etc/shadow"
-GROUP_FILE="$ROOTFS_DIR/etc/group"
-GSHADOW_FILE="$ROOTFS_DIR/etc/gshadow"
+if [ ! -f "$PROOT_MAIN/patched" ]; then
+    echo "[*] Applying Android UID/GID fix..."
 
-chmod u+rw "$PASSWD_FILE" "$SHADOW_FILE" "$GROUP_FILE" "$GSHADOW_FILE" >/dev/null 2>&1 || true
+    REAL_UID=$(grep '^Uid:' /proc/self/status | awk '{print $2}')
+    REAL_GID=$(grep '^Gid:' /proc/self/status | awk '{print $2}')
+    REAL_USER=$(id -un)
 
-USER_NAME=$(id -un)
-USER_UID=$(id -u)
-USER_GID=$(id -g)
+    chmod u+rw \
+        $ROOTFS_DIR/etc/passwd \
+        $ROOTFS_DIR/etc/group \
+        $ROOTFS_DIR/etc/shadow \
+        $ROOTFS_DIR/etc/gshadow 2>/dev/null || true
 
-# Add current user
-grep -q "^aid_$USER_NAME:" "$PASSWD_FILE" || \
-echo "aid_$USER_NAME:x:$USER_UID:$USER_GID:User:/root:/sbin/nologin" >> "$PASSWD_FILE"
+    if ! grep -q "aid_${REAL_USER}:" $ROOTFS_DIR/etc/passwd; then
+        echo "aid_${REAL_USER}:x:${REAL_UID}:${REAL_GID}:Android User:/:/sbin/nologin" \
+            >> $ROOTFS_DIR/etc/passwd
+        echo "aid_${REAL_USER}:*:18446:0:99999:7:::" \
+            >> $ROOTFS_DIR/etc/shadow
+    fi
 
-grep -q "^aid_$USER_NAME:" "$SHADOW_FILE" || \
-echo "aid_$USER_NAME:*:18446:0:99999:7:::" >> "$SHADOW_FILE"
-
-# Add groups
-id -Gn | tr ' ' '\n' | while read gname; do
-    # Get GID from /etc/group, fallback to USER_GID
-    gid=$(grep -E "^$gname:" "$GROUP_FILE" 2>/dev/null | cut -d: -f3)
-    [ -z "$gid" ] && gid="$USER_GID"
-
-    grep -q "^aid_$gname:" "$GROUP_FILE" || \
-        echo "aid_$gname:x:$gid:root,aid_$USER_NAME" >> "$GROUP_FILE"
-
-    [ -f "$GSHADOW_FILE" ] && grep -q "^aid_$gname:" "$GSHADOW_FILE" || \
-        echo "aid_$gname:*::root,aid_$USER_NAME" >> "$GSHADOW_FILE"
-done
-
+    paste <(id -Gn | tr ' ' '\n') <(id -G | tr ' ' '\n') | while read -r gname gid; do
+        if ! grep -q "aid_${gname}:" $ROOTFS_DIR/etc/group; then
+            echo "aid_${gname}:x:${gid}:root,aid_${REAL_USER}" \
+                >> $ROOTFS_DIR/etc/group
+            echo "aid_${gname}:*::root,aid_${REAL_USER}" \
+                >> $ROOTFS_DIR/etc/gshadow 2>/dev/null
+        fi
+    done
+    
 if [ $# -gt 0 ]; then
     # shellcheck disable=SC2086
     $PROOT_BIN $ARGS "$@"
