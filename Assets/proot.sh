@@ -74,11 +74,16 @@ ARGS="$ARGS -b $PROOT_MAIN"
 ARGS="$ARGS -b /sys"
 #ARGS="$ARGS -b /cache"
 
+# Termux-X11 socket bind
+if [ -d /data/local/tmp/.X11-unix ]; then
+    ARGS="$ARGS -b /data/local/tmp/.X11-unix:/tmp/.X11-unix"
+fi
+
 if [ ! -d "$ROOTFS_DIR/tmp" ]; then
     mkdir -p "$ROOTFS_DIR/tmp"
     chmod 1777 "$ROOTFS_DIR/tmp"
 fi
-PREFIX=/data/data/com.termux/files/usr
+
 ARGS="$ARGS -b $PREFIX/tmp:/tmp"
 #ARGS="$ARGS -b /data/data/com.termux/files/usr/tmp:/tmp"
 ARGS="$ARGS -b $ROOTFS_DIR/tmp:/dev/shm"
